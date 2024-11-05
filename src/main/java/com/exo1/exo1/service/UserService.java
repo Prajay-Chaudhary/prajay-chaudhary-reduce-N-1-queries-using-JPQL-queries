@@ -17,10 +17,10 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class UserService {
-    private final UserRepository userRepository;
-    private final TaskRepository taskRepository;
-    private final ProjetRepository projetRepository;
-    private final UserMapper userMapper;
+    private UserRepository userRepository;
+    private TaskRepository taskRepository;
+    private ProjetRepository projetRepository;
+    private UserMapper userMapper;
 
     public List<UserDto> findAll() {
         return userMapper.toDtos(userRepository.findAllWithTaskAndProjects());
@@ -28,6 +28,13 @@ public class UserService {
 
     public UserDto findById(long id) {
         return userMapper.toDto(userRepository.findByIdWithTaskAndProjects(id).orElse(null));
+    }
+
+    private void setupUserProjectsAndTasks(User user) {
+        user.getProjets().forEach(projet -> {
+            projet.setUsers(Collections.singleton(user));
+            projet.getTasks().forEach(task -> task.setProjet(projet));
+        });
     }
 
     public UserDto save(UserDto userDto) {
@@ -41,18 +48,22 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found with id " + id));
         userDto.setId(existingUser.getId());
         User userUpdated = userMapper.toEntity(userDto);
-        setupUserProjectsAndTasks(userUpdated);
+
+        userUpdated.getProjets().forEach(projet -> {
+            if (projetRepository.findById(projet.getId()).isPresent()) {
+                projet.setUsers(Collections.singleton(userUpdated));
+                projet.getTasks().forEach(task -> {
+                    if (taskRepository.findById(task.getId()).isPresent()) {
+                        task.setProjet(projet);
+                    }
+                });
+            }
+        });
+
         return userMapper.toDto(userRepository.save(userUpdated));
     }
 
     public void delete(Long id) {
         userRepository.deleteById(id);
-    }
-
-    private void setupUserProjectsAndTasks(User user) {
-        user.getProjets().forEach(projet -> {
-            projet.setUsers(Collections.singleton(user));
-            projet.getTasks().forEach(task -> task.setProjet(projet));
-        });
     }
 }

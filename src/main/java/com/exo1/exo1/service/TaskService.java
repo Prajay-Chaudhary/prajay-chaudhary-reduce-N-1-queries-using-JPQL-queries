@@ -21,7 +21,9 @@ public class TaskService {
     }
 
     public TaskDto findById(long id) {
-        return taskMapper.toDto(taskRepository.findById(Long.valueOf(id)).orElse(null));
+        Task task = taskRepository.findByIdWithProject(id)
+                .orElseThrow(() -> new NotFoundException("Task not found with id " + id));
+        return taskMapper.toDto(task);
     }
 
     public TaskDto save(TaskDto taskDto) {

@@ -23,7 +23,10 @@ public class ProjetService {
     }
 
     public ProjetDto findById(long id) {
-        return projetMapper.toDto(projetRepository.findById(Long.valueOf(id)).orElse(null));
+        // findByIdWithTasks to fetch the Projet along with its associated tasks
+        Projet projet = projetRepository.findByIdWithTasks(id)
+                .orElseThrow(() -> new NotFoundException("Projet not found with id " + id));
+        return projetMapper.toDto(projet);
     }
 
     public ProjetDto save(ProjetDto projetDto) {

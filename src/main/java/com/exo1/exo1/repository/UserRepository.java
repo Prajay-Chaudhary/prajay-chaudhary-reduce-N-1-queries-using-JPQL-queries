@@ -10,11 +10,9 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Fetch User with both Task and Projects to avoid multiple queries
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.task LEFT JOIN FETCH u.projets WHERE u.id = :id")
     Optional<User> findByIdWithTaskAndProjects(@Param("id") Long id);
 
-    // Fetch all Users with associated Task and Projects, useful to avoid N+1 on lists
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.task LEFT JOIN FETCH u.projets")
     List<User> findAllWithTaskAndProjects();
 }
