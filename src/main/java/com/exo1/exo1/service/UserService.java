@@ -7,6 +7,7 @@ import com.exo1.exo1.repository.ProjetRepository;
 import com.exo1.exo1.repository.TaskRepository;
 import com.exo1.exo1.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,6 @@ public class UserService {
     private final ProjetRepository projetRepository;
     private final UserMapper userMapper;
 
-    // Paginated findAll
     public Page<UserDto> findAll(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(userMapper::toDto);
@@ -45,6 +45,7 @@ public class UserService {
         return userMapper.toDto(userRepository.save(user));
     }
 
+    @CacheEvict(value = "users", key = "#user.id")
     public UserDto update(Long id, UserDto userDto) {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found with id " + id));
@@ -63,6 +64,7 @@ public class UserService {
         return userMapper.toDto(userRepository.save(userUpdated));
     }
 
+    @CacheEvict(value = "users", key = "#id")
     public void delete(Long id) {
         userRepository.deleteById(id);
     }
